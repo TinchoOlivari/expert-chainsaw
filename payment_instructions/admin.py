@@ -51,7 +51,7 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(PaymentRecipient)
 class PaymentRecipientAdmin(admin.ModelAdmin):
     list_display = (
-        'alias', 'max_amount_display', 'current_month_received', 'priority_order', 'is_recurring'
+        'alias', 'max_amount_display', 'current_month_received', 'priority_order', 'is_recurring', 'is_active'
     )
     list_filter = ('is_recurring', 'is_active', 'created_at')
     search_fields = ('name', 'alias', 'cbu')
@@ -71,7 +71,7 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
         }),
     )
     
-    actions = ['reset_monthly_balances', 'activate_recipients', 'deactivate_recipients']
+    actions = ['activate_recipients', 'deactivate_recipients']
 
     def max_amount_display(self, obj):
         return f"${obj.max_amount}"
@@ -88,23 +88,15 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
         return f"${remaining}"
     remaining_amount.short_description = 'Restante'
     
-    def reset_monthly_balances(self, request, queryset):
-        for recipient in queryset:
-            if recipient.is_recurring:
-                # This would be implemented in the monthly reset system
-                pass
-        self.message_user(request, f"Reset monthly balances for {queryset.count()} recipients.")
-    reset_monthly_balances.short_description = "Reset monthly balances for recurring recipients"
-    
     def activate_recipients(self, request, queryset):
         updated = queryset.update(is_active=True)
         self.message_user(request, f"Activated {updated} recipients.")
-    activate_recipients.short_description = "Activate selected recipients"
+    activate_recipients.short_description = "Activar seleccionados"
     
     def deactivate_recipients(self, request, queryset):
         updated = queryset.update(is_active=False)
         self.message_user(request, f"Deactivated {updated} recipients.")
-    deactivate_recipients.short_description = "Deactivate selected recipients"
+    deactivate_recipients.short_description = "Desactivar seleccionados"
     
     def has_add_permission(self, request):
         if request.user.is_superuser:

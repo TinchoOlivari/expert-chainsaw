@@ -30,25 +30,19 @@
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-semibold text-gray-500">
-                        Sistema de pagos - Docta Dent
-                    </h1>
-                </div>
-                <div class="flex items-center">
-                    <a href="{% url 'payment_instructions:operator_logout' %}"
-                        class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                        Salir
-                    </a>
-                </div>
+            <div class="flex flex-wrap  py-4">
+                <h1 class="text-2xl font-semibold text-gray-500 pr-1">
+                    Sistema de pagos -
+                </h1>
+                <h1 class="text-2xl font-semibold text-[#8CBE4F]"> Docta Dent</h1>
             </div>
+
         </div>
     </nav>
 
     <div class="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-            <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+        <div class="px-6 py-6 sm:px-0">
+            <div class="bg-white overflow-hidden shadow-lg rounded-lg p-4">
                 <div class="px-4 py-5 sm:p-6">
                     <h3 class="text-xl leading-6 font-medium text-gray-900 mb-6">
                         Ingresa el monto del nuevo pago
@@ -112,6 +106,40 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="fab-container" class="fixed bottom-8 right-8 z-50 flex flex-col items-end space-y-2">
+        <!-- Options (hidden by default) -->
+        <div id="fab-options" class="mb-2 hidden flex-col items-end space-y-2">
+            <a href="/admin/"
+                class="flex items-center px-4 py-2 bg-white rounded-md shadow text-gray-500 hover:bg-gray-100 transition">
+                <svg class="w-5 h-5 mr-2 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
+                </svg>
+                Admin
+            </a>
+            <a href="{% url 'payment_instructions:operator_logout' %}"
+                class="flex items-center px-4 py-2 bg-white rounded-md shadow text-gray-500 hover:bg-gray-100 transition">
+                <svg class="w-5 h-5 mr-2 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
+                </svg>
+                Salir
+            </a>
+        </div>
+        <!-- Main FAB -->
+        <button id="fab-btn" type="button"
+            class="w-14 h-14 rounded-full shadow-md flex items-center justify-center text-gray-300 hover:bg- text-3xl hover:shadow-lg focus:outline-none transition">
+            <svg id="fab-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+                <circle cx="12" cy="8" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="16" r="1.5" />
+            </svg>
+        </button>
     </div>
 
     <script>
@@ -267,6 +295,19 @@
         amountInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && currentSearchData) {
                 createPaymentBtn.click();
+            }
+        });
+
+
+        const fabBtn = document.getElementById('fab-btn');
+        const fabOptions = document.getElementById('fab-options');
+        fabBtn.addEventListener('click', function () {
+            fabOptions.classList.toggle('hidden');
+        });
+        // Optional: Hide options when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!fabBtn.contains(e.target) && !fabOptions.contains(e.target)) {
+                fabOptions.classList.add('hidden');
             }
         });
     </script>
