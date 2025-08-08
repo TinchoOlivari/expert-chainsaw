@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docta Dent - Sistema de Pagos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<style>
+    input:-webkit-autofill {
+        box-shadow: 0 0 0 1000px white inset !important;
+        -webkit-text-fill-color: #000 !important;
+    }
+
+    /* Hide arrows in Chrome, Safari, Edge */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input {
+        all: unset;
+    }
+</style>
+
+
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-semibold text-gray-500">
+                        Sistema de pagos - Docta Dent
+                    </h1>
+                </div>
+                <div class="flex items-center">
+                    <a href="{% url 'payment_instructions:operator_logout' %}"
+                        class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                        Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-xl leading-6 font-medium text-gray-900 mb-6">
+                        Ingresa el monto del nuevo pago
+                    </h3>
+
+                    <!-- Search Form -->
+                    <div class="space-y-4">
+                        <div>
+                            <div class="mt-1 relative rounded-md">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-300 text-4xl">$</span>
+                                </div>
+                                <input type="number" id="amount" step="1" min="0" required
+                                    class="block w-full pl-12 pr-12 rounded-md text-5xl" placeholder="0"
+                                    autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Results -->
+                    <div id="results" class="hidden">
+                        <div class="h-px bg-gray-200 my-4"></div>
+                        <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Alias encontrado:</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-sm font-medium text-gray-500">Nombre:</span>
+                                    <span id="recipientName" class="text-sm text-gray-900"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm font-medium text-gray-500">Alias:</span>
+                                    <span id="recipientAlias" class="text-sm text-gray-900 font-mono"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm font-medium text-gray-500">CBU/CVU:</span>
+                                    <span id="recipientCbu" class="text-sm text-gray-900 font-mono"></span>
+                                </div>
+                            </div>
+
+                            <button type="button" id="createPaymentBtn"
+                                class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                Crear Pago
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Error Messages -->
+                    <div id="errorMessage"
+                        class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                        role="alert">
+                        <span id="errorText"></span>
+                    </div>
+
+                    <!-- Success Messages -->
+                    <div id="successMessage"
+                        class="hidden mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
+                        role="alert">
+                        <span id="successText"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const amountInput = document.getElementById('amount');
+        const createPaymentBtn = document.getElementById('createPaymentBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const results = document.getElementById('results');
+
+        let currentSearchData = null;
+        let debounceTimer = null;
+        let currentRequest = null;
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            errorMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+        }
+
+        function showSuccess(message) {
+            document.getElementById('successText').textContent = message;
+            successMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        function hideMessages() {
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+        }
+
+        function hideResults() {
+            results.classList.add('hidden');
+            currentSearchData = null;
+        }
+
+        async function performSearch(amount) {
+            if (!amount || amount <= 0) {
+                hideResults();
+                return;
+            }
+
+            // Cancel previous request if it exists
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+
+            hideMessages();
+
+            try {
+                const controller = new AbortController();
+                currentRequest = controller;
+
+                const response = await fetch('{% url "payment_instructions:search_alias" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount) }),
+                    signal: controller.signal
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    document.getElementById('recipientName').textContent = data.name;
+                    document.getElementById('recipientAlias').textContent = data.alias;
+                    document.getElementById('recipientCbu').textContent = data.cbu;
+
+                    currentSearchData = data;
+                    results.classList.remove('hidden');
+                } else {
+                    hideResults();
+                    if (data.error && data.error !== 'No hay destinatarios disponibles para este monto') {
+                        showError(data.error);
+                    }
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    hideResults();
+                    showError('Error de conexión');
+                }
+            } finally {
+                currentRequest = null;
+            }
+        }
+
+        // Debounced search function
+        function debounceSearch(amount) {
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+
+            debounceTimer = setTimeout(() => {
+                performSearch(amount);
+            }, 500); // 500ms delay
+        }
+
+        // Input event listener for auto-search
+        amountInput.addEventListener('input', function (e) {
+            const amount = e.target.value.trim();
+            debounceSearch(amount);
+        });
+
+        // Clear results when input is empty
+        amountInput.addEventListener('blur', function () {
+            if (!this.value.trim()) {
+                hideResults();
+            }
+        });
+
+        createPaymentBtn.addEventListener('click', async function () {
+            if (!currentSearchData) {
+                showError('No hay datos de pago disponibles');
+                return;
+            }
+
+            hideMessages();
+            createPaymentBtn.disabled = true;
+            createPaymentBtn.textContent = 'Creando...';
+
+            try {
+                const response = await fetch('{% url "payment_instructions:create_payment" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({
+                        amount: parseFloat(currentSearchData.amount),
+                        alias: currentSearchData.alias
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess(data.message);
+                    amountInput.value = '';
+                    hideResults();
+                } else {
+                    showError(data.error || 'Error al crear el pago');
+                }
+            } catch (error) {
+                showError('Error de conexión');
+            } finally {
+                createPaymentBtn.disabled = false;
+                createPaymentBtn.textContent = 'Crear Pago';
+            }
+        });
+
+        // Allow Enter key to create payment when results are visible
+        amountInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && currentSearchData) {
+                createPaymentBtn.click();
+            }
+        });
+    </script>
+</body>
+
+</html>
