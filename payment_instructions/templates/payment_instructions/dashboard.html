@@ -23,6 +23,62 @@
 
     input {
         all: unset;
+        box-sizing: border-box;
+    }
+
+    /* Safari-friendly placeholder color to match "$" (#D1D5DB) */
+    #amount::placeholder {
+        color: rgba(209, 213, 219, 1);
+    }
+
+    #amount::-webkit-input-placeholder {
+        color: rgba(209, 213, 219, 1);
+    }
+
+    #amount:-ms-input-placeholder {
+        color: rgba(209, 213, 219, 1);
+    }
+
+    #amount::-moz-placeholder {
+        color: rgba(209, 213, 219, 1);
+        opacity: 1;
+    }
+
+    #amount:-moz-placeholder {
+        color: rgba(209, 213, 219, 1);
+    }
+
+    /* Subtle fade animations */
+    @keyframes fade-in-soft {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fade-out-soft {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in-soft 320ms ease-out both;
+    }
+
+    .animate-fade-out {
+        animation: fade-out-soft 200ms ease-in both;
     }
 </style>
 
@@ -42,7 +98,7 @@
 
     <div class="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-6 py-6 sm:px-0">
-            <div class="bg-white overflow-hidden shadow-lg rounded-lg p-4">
+            <div data-animate="fade-in" class="bg-white overflow-hidden shadow-lg rounded-lg p-4 opacity-0">
                 <div class="px-4 py-5 sm:p-6">
                     <h3 class="text-xl leading-6 font-medium text-gray-900 mb-6">
                         Ingresa el monto del nuevo pago
@@ -85,7 +141,7 @@
 
                             <button type="button" id="createPaymentBtn"
                                 class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                Crear Pago
+                                Crear pago
                             </button>
                         </div>
                     </div>
@@ -108,7 +164,8 @@
         </div>
     </div>
 
-    <div id="fab-container" class="fixed bottom-8 right-8 z-50 flex flex-col items-end space-y-2">
+    <div id="fab-container" data-animate="fade-in"
+        class="fixed bottom-8 right-8 z-50 flex flex-col items-end space-y-2 opacity-0">
         <!-- Options (hidden by default) -->
         <div id="fab-options" class="mb-2 hidden flex-col items-end space-y-2">
             <a href="/admin/"
@@ -153,25 +210,50 @@
         let debounceTimer = null;
         let currentRequest = null;
 
+        function revealWithAnimation(element) {
+            element.classList.remove('animate-fade-out');
+            element.classList.remove('hidden');
+            void element.offsetWidth; // reflow to restart animation
+            element.classList.add('animate-fade-in');
+            const onEnd = () => {
+                element.classList.remove('animate-fade-in');
+                element.removeEventListener('animationend', onEnd);
+            };
+            element.addEventListener('animationend', onEnd);
+        }
+
+        function hideWithAnimation(element) {
+            if (element.classList.contains('hidden')) return;
+            element.classList.remove('animate-fade-in');
+            void element.offsetWidth;
+            element.classList.add('animate-fade-out');
+            const onEnd = () => {
+                element.classList.add('hidden');
+                element.classList.remove('animate-fade-out');
+                element.removeEventListener('animationend', onEnd);
+            };
+            element.addEventListener('animationend', onEnd);
+        }
+
         function showError(message) {
             document.getElementById('errorText').textContent = message;
-            errorMessage.classList.remove('hidden');
-            successMessage.classList.add('hidden');
+            hideWithAnimation(successMessage);
+            revealWithAnimation(errorMessage);
         }
 
         function showSuccess(message) {
             document.getElementById('successText').textContent = message;
-            successMessage.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
+            hideWithAnimation(errorMessage);
+            revealWithAnimation(successMessage);
         }
 
         function hideMessages() {
-            errorMessage.classList.add('hidden');
-            successMessage.classList.add('hidden');
+            hideWithAnimation(errorMessage);
+            hideWithAnimation(successMessage);
         }
 
         function hideResults() {
-            results.classList.add('hidden');
+            hideWithAnimation(results);
             currentSearchData = null;
         }
 
@@ -210,7 +292,7 @@
                     document.getElementById('recipientCbu').textContent = data.cbu;
 
                     currentSearchData = data;
-                    results.classList.remove('hidden');
+                    revealWithAnimation(results);
                 } else {
                     hideResults();
                     if (data.error && data.error !== 'No hay destinatarios disponibles para este monto') {
@@ -287,7 +369,7 @@
                 showError('Error de conexión');
             } finally {
                 createPaymentBtn.disabled = false;
-                createPaymentBtn.textContent = 'Crear Pago';
+                createPaymentBtn.textContent = 'Crear pago';
             }
         });
 
@@ -310,6 +392,32 @@
                 fabOptions.classList.add('hidden');
             }
         });
+
+        // Page-load subtle animations for marked elements
+        document.addEventListener('DOMContentLoaded', function () {
+            const staged = document.querySelectorAll('[data-animate="fade-in"]');
+            staged.forEach((el, idx) => {
+                setTimeout(() => {
+                    el.classList.add('animate-fade-in');
+                    const onEnd = () => {
+                        el.classList.remove('animate-fade-in');
+                        el.classList.remove('opacity-0');
+                        el.removeEventListener('animationend', onEnd);
+                    };
+                    el.addEventListener('animationend', onEnd);
+                }, idx * 60);
+            });
+        });
+
+        const inputElement = document.getElementById('amount');
+        const maxLength = 10; // Desired maximum number of digits
+
+        inputElement.addEventListener('input', (event) => {
+            if (event.target.value.length > maxLength) {
+                event.target.value = event.target.value.slice(0, maxLength);
+            }
+        });
+        
     </script>
 </body>
 
