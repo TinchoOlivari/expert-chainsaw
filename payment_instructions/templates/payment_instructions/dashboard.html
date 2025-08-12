@@ -123,19 +123,36 @@
                     <div id="results" class="hidden">
                         <div class="h-px bg-gray-200 my-4"></div>
                         <div class="mt-6 bg-gray-50 p-4 rounded-lg">
-                            <h4 class="text-md font-medium text-gray-900 mb-4">Alias encontrado:</h4>
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Datos del destinatario:</h4>
                             <div class="space-y-2">
                                 <div class="flex justify-between">
                                     <span class="text-sm font-medium text-gray-500">Nombre:</span>
                                     <span id="recipientName" class="text-sm text-gray-900"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-sm font-medium text-gray-500">Alias:</span>
-                                    <span id="recipientAlias" class="text-sm text-gray-900 font-mono"></span>
+                                    <span class="text-sm font-medium text-gray-500">Banco:</span>
+                                    <span id="bankName" class="text-sm text-gray-900">-</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-sm font-medium text-gray-500">CBU/CVU:</span>
-                                    <span id="recipientCbu" class="text-sm text-gray-900 font-mono"></span>
+                                    <span class="text-sm font-medium text-gray-500">Alias:</span>
+                                    <div class="flex items-center gap-2">
+                                        <span id="recipientAlias" class="text-sm text-gray-900 font-mono"></span>
+
+                                        <button type="button" id="copyAliasBtn" 
+                                            class="group flex items-center justify-center p-1 rounded hover:bg-gray-100 transition-colors duration-200" onclick="copyAlias()">
+                                            <svg height='16' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'
+                                                xmlns:xlink='http://www.w3.org/1999/xlink' class="group-hover:text-blue-600 transition-colors duration-100">
+                                                <rect width='24' height='24' stroke='none' fill='#000000' opacity='0' />
+                                                <g transform="matrix(1 0 0 1 12 12)">
+                                                    <path
+                                                        style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: currentColor; fill-rule: nonzero; opacity: 1;"
+                                                        transform=" translate(-12, -12)"
+                                                        d="M 4 2 C 2.895 2 2 2.895 2 4 L 2 18 L 4 18 L 4 4 L 18 4 L 18 2 L 4 2 z M 8 6 C 6.895 6 6 6.895 6 8 L 6 20 C 6 21.105 6.895 22 8 22 L 20 22 C 21.105 22 22 21.105 22 20 L 22 8 C 22 6.895 21.105 6 20 6 L 8 6 z M 8 8 L 20 8 L 20 20 L 8 20 L 8 8 z"
+                                                        stroke-linecap="round" />
+                                                </g>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -286,10 +303,12 @@
 
                 const data = await response.json();
 
+                console.log(data);      
+
                 if (response.ok && data.success) {
                     document.getElementById('recipientName').textContent = data.name;
                     document.getElementById('recipientAlias').textContent = data.alias;
-                    document.getElementById('recipientCbu').textContent = data.cbu;
+                    document.getElementById('bankName').textContent = data.bank_name;
 
                     currentSearchData = data;
                     revealWithAnimation(results);
@@ -417,7 +436,19 @@
                 event.target.value = event.target.value.slice(0, maxLength);
             }
         });
-        
+
+        // Copy alias function
+        function copyAlias() {
+            const aliasText = document.getElementById('recipientAlias').textContent;
+            if (aliasText) {
+                navigator.clipboard.writeText(aliasText).then(() => {
+                    showSuccess('Alias copiado al portapapeles');
+                }).catch(() => {
+                    showError('Error al copiar el alias');
+                });
+            }
+        }
+
     </script>
 </body>
 

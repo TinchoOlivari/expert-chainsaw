@@ -65,7 +65,7 @@ def search_alias(request):
             return JsonResponse({
                 'success': True,
                 'alias': recipient.alias,
-                'cbu': recipient.cbu,
+                'bank_name': recipient.bank.name,
                 'name': recipient.name,
                 'amount': str(amount)
             })
