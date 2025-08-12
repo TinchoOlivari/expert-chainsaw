@@ -1,30 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema de Pagos</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-6">
     <div class="max-w-md w-full space-y-8">
         <div>
             <h2 class="mt-6 text-center text-3xl font-bold text-gray-900">
-                Sistema de Pagos
+                Sistema de pagos
             </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Acceso para operadores
+            <h3 class="text-center text-2xl font-bold text-[#8CBE4F]">
+                Docta Dentis
+            </h4>
+            <p class="mt-4 text-center text-sm text-gray-600">
+                Acceso para guardias
             </p>
         </div>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ message }}</span>
-                </div>
-            {% endfor %}
-        {% endif %}
-        
+
+
         <form class="mt-8 space-y-6" method="post">
             {% csrf_token %}
             <div class="space-y-4">
@@ -32,34 +30,37 @@
                     <label for="username" class="block text-sm font-medium text-gray-700">
                         Usuario
                     </label>
-                    <input type="text" 
-                           id="username" 
-                           name="username" 
-                           required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="Ingrese su usuario">
+                    <input type="text" id="username" name="username" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ingrese su usuario">
                 </div>
-                
+
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">
                         Contraseña
                     </label>
-                    <input type="password" 
-                           id="password" 
-                           name="password" 
-                           required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="Ingrese su contraseña">
+                    <input type="password" id="password" name="password" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ingrese su contraseña">
                 </div>
             </div>
-            
+
             <div>
-                <button type="submit" 
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button type="submit"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Ingresar
                 </button>
             </div>
         </form>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <span class="block sm:inline">{{ message }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
     </div>
 </body>
+
 </html>
