@@ -2,7 +2,18 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from decimal import Decimal
+import os
+from datetime import datetime
+
+def modify_file_name(instance, filename):
+    ext = filename.split('.')[-1]
+    alias = instance.payment_recipient.alias if instance.payment_recipient else "unknown"
+    day = datetime.now().strftime("%d_%H_%M_%S")
+    year = datetime.now().strftime("%Y")
+    month = datetime.now().strftime("%m")
+    
+    new_filename = f"{alias}_{day}.{ext}"
+    return os.path.join(f'comprobantes/{year}/{month}', new_filename)
 
 
 class Bank(models.Model):
@@ -371,7 +382,7 @@ class Payment(models.Model):
     )
     proof_of_payment_file = models.FileField(
         verbose_name='Comprobante',
-        upload_to='comprobantes/%Y/%m/',
+        upload_to=modify_file_name,
         blank=True,
         null=True,
         help_text='Subir comprobante de pago (imagen o PDF)'
