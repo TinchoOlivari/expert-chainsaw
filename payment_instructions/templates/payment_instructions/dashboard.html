@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Docta Dent - Sistema de Pagos</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 
 <style>
@@ -125,23 +126,25 @@
                         <div class="mt-6 bg-gray-50 p-4 rounded-lg">
                             <h4 class="text-md font-medium text-gray-900 mb-4">Datos del destinatario:</h4>
                             <div class="space-y-2">
-                                <div class="flex justify-between">
+                                <div class="flex flex-col sm:flex-row justify-between">
                                     <span class="text-sm font-medium text-gray-500">Nombre:</span>
                                     <span id="recipientName" class="text-sm text-gray-900"></span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex flex-col sm:flex-row justify-between">
                                     <span class="text-sm font-medium text-gray-500">Banco:</span>
                                     <span id="bankName" class="text-sm text-gray-900">-</span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex flex-col sm:flex-row justify-between">
                                     <span class="text-sm font-medium text-gray-500">Alias:</span>
                                     <div class="flex items-center gap-2">
                                         <span id="recipientAlias" class="text-sm text-gray-900 font-mono"></span>
 
-                                        <button type="button" id="copyAliasBtn" 
-                                            class="group flex items-center justify-center p-1 rounded hover:bg-gray-100 transition-colors duration-200" onclick="copyAlias()">
+                                        <button type="button" id="copyAliasBtn"
+                                            class="group flex items-center justify-center p-1 rounded hover:bg-gray-100 transition-colors duration-200"
+                                            onclick="copyAlias()">
                                             <svg height='16' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'
-                                                xmlns:xlink='http://www.w3.org/1999/xlink' class="group-hover:text-blue-600 transition-colors duration-100">
+                                                xmlns:xlink='http://www.w3.org/1999/xlink'
+                                                class="group-hover:text-blue-600 transition-colors duration-100">
                                                 <rect width='24' height='24' stroke='none' fill='#000000' opacity='0' />
                                                 <g transform="matrix(1 0 0 1 12 12)">
                                                     <path
@@ -156,29 +159,62 @@
                                 </div>
                             </div>
 
-                            <button type="button" id="createPaymentBtn"
-                                class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                Crear pago
-                            </button>
+                            <!-- File Upload Section -->
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-500">Comprobante:</span>
+                                </div>
+
+                                <div id="fileDropZone"
+                                    class="flex flex-col items-center justify-center w-full min-h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition group">
+                                    <input id="fileInput" name="proof_of_payment_file" type="file"
+                                        accept=".jpg,.jpeg,.png,.gif,.pdf" class="hidden">
+
+                                    <!-- Preview -->
+                                    <div id="filePreview" class="m-3"></div>
+                                    <div id="fileContent"
+                                        class="flex flex-col items-center space-y-2 text-gray-500 group-hover:text-gray-600 transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                            </path>
+                                        </svg>
+                                        <span class="text-sm">Subir archivo</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end mt-2">
+                                    <button type="button" id="clearFileBtn"
+                                        class="hidden text-xs text-red-600 hover:text-red-800 transition-colors"
+                                        onclick="clearFile()">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Error Messages -->
-                    <div id="errorMessage"
-                        class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-                        role="alert">
-                        <span id="errorText"></span>
+                        <button type="button" id="createPaymentBtn"
+                            class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Crear pago
+                        </button>
                     </div>
+                </div>
 
-                    <!-- Success Messages -->
-                    <div id="successMessage"
-                        class="hidden mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
-                        role="alert">
-                        <span id="successText"></span>
-                    </div>
+                <!-- Error Messages -->
+                <div id="errorMessage"
+                    class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                    role="alert">
+                    <span id="errorText"></span>
+                </div>
+
+                <!-- Success Messages -->
+                <div id="successMessage"
+                    class="hidden mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
+                    role="alert">
+                    <span id="successText"></span>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <div id="fab-container" data-animate="fade-in"
@@ -290,7 +326,6 @@
             try {
                 const controller = new AbortController();
                 currentRequest = controller;
-
                 const response = await fetch('{% url "payment_instructions:search_alias" %}', {
                     method: 'POST',
                     headers: {
@@ -300,10 +335,7 @@
                     body: JSON.stringify({ amount: parseFloat(amount) }),
                     signal: controller.signal
                 });
-
                 const data = await response.json();
-
-                console.log(data);      
 
                 if (response.ok && data.success) {
                     document.getElementById('recipientName').textContent = data.name;
@@ -311,7 +343,9 @@
                     document.getElementById('bankName').textContent = data.bank_name;
 
                     currentSearchData = data;
+                    clearFile();
                     revealWithAnimation(results);
+
                 } else {
                     hideResults();
                     if (data.error && data.error !== 'No hay destinatarios disponibles para este monto') {
@@ -363,16 +397,20 @@
             createPaymentBtn.textContent = 'Creando...';
 
             try {
+                const fd = new FormData();
+                fd.append('amount', parseInt(currentSearchData.amount, 10));
+                fd.append('alias', currentSearchData.alias);
+
+                if (selectedFile) {
+                    fd.append('proof_of_payment_file', selectedFile);
+                }
+
                 const response = await fetch('{% url "payment_instructions:create_payment" %}', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}',
                     },
-                    body: JSON.stringify({
-                        amount: parseFloat(currentSearchData.amount),
-                        alias: currentSearchData.alias
-                    })
+                    body: fd
                 });
 
                 const data = await response.json();
@@ -380,6 +418,7 @@
                 if (response.ok && data.success) {
                     showSuccess(data.message);
                     amountInput.value = '';
+                    clearFile();
                     hideResults();
                 } else {
                     showError(data.error || 'Error al crear el pago');
@@ -447,6 +486,140 @@
                     showError('Error al copiar el alias');
                 });
             }
+        }
+
+        // File upload functionality
+        const fileInput = document.getElementById('fileInput');
+        const fileDropZone = document.getElementById('fileDropZone');
+        const fileContent = document.getElementById('fileContent');
+        const clearFileBtn = document.getElementById('clearFileBtn');
+        let selectedFile = null;
+
+        // Handle file selection
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            handleFileSelection(file);
+        });
+
+        // Handle drag and drop
+        fileDropZone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            fileDropZone.classList.add('border-green-400', 'bg-green-50');
+        });
+
+        fileDropZone.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            fileDropZone.classList.remove('border-green-400', 'bg-green-50');
+        });
+
+        fileDropZone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            fileDropZone.classList.remove('border-green-400', 'bg-green-50');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelection(file);
+            }
+        });
+
+        fileDropZone.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        function handleFileSelection(file) {
+            if (!file) return;
+
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                showError('Tipo de archivo no válido. Solo se permiten imágenes y PDFs.');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showError('El archivo es demasiado grande. Máximo 5MB.');
+                return;
+            }
+
+            selectedFile = file;
+            displaySelectedFile(file);
+        }
+
+        function displaySelectedFile(file) {
+            fileContent.innerHTML = ``;
+
+            clearFileBtn.classList.remove('hidden');
+
+            const preview = document.getElementById('filePreview');
+            preview.innerHTML = "";
+
+            if (file.type.startsWith("image/")) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    img.classList.add("rounded-lg", "shadow-md", "max-h-48");
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            else if (file.type === "application/pdf") {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const typedarray = new Uint8Array(e.target.result);
+
+                    pdfjsLib.getDocument(typedarray).promise.then(function (pdf) {
+                        pdf.getPage(1).then(function (page) {
+                            const viewport = page.getViewport({ scale: 1 }); // adjust the size
+                            const canvas = document.createElement("canvas");
+                            const context = canvas.getContext("2d");
+
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+
+                            page.render(renderContext).promise.then(function () {
+                                const img = document.createElement("img");
+                                img.src = canvas.toDataURL("image/png");
+                                img.classList.add("rounded-lg", "shadow-md", "max-h-48");
+                                preview.appendChild(img);
+                            });
+                        });
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            else {
+                const p = document.createElement("p");
+                p.textContent = "Vista previa no disponible. Archivo: " + file.name;
+                p.classList.add("text-gray-600", "text-sm", "mt-2");
+                preview.appendChild(p);
+            }
+        }
+
+        clearFileBtn.addEventListener('click', clearFile);
+
+        function clearFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            clearFileBtn.classList.add('hidden');
+
+            fileContent.innerHTML = `
+                <div class="flex items-center space-x-2 text-gray-500 group-hover:text-gray-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <span class="text-sm">Subir archivo</span>
+                </div>
+            `;
+
+            document.getElementById('filePreview').innerHTML = "";
         }
 
     </script>

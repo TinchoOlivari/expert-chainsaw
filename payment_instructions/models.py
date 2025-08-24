@@ -371,7 +371,7 @@ class Payment(models.Model):
     )
     proof_of_payment_file = models.FileField(
         verbose_name='Comprobante',
-        upload_to='payment_proofs/%Y/%m/',
+        upload_to='comprobantes/%Y/%m/',
         blank=True,
         null=True,
         help_text='Subir comprobante de pago (imagen o PDF)'

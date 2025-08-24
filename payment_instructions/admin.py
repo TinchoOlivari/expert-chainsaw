@@ -118,21 +118,39 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
 class PaymentAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'amount_display', 'payment_recipient', 'operator_user', 
-        'has_proof', 'created_at'
+        'has_proof', 'created_at',
     )
     list_filter = ('created_at', 'payment_recipient', 'operator_user', 'created_at')
     search_fields = ('payment_recipient__name', 'payment_recipient__alias', 'operator_user__username', 'notes')
     ordering = ('-created_at',)
-    readonly_fields = ('created_at',)
+    readonly_fields = ('created_at', 'preview_proof')
     
     fieldsets = (
         ('Payment Information', {
             'fields': ('amount', 'payment_recipient','operator_user','created_at',)
         }),
         ('Documentation', {
-            'fields': ('proof_of_payment_file', 'notes')
+            'fields': ('proof_of_payment_file', 'notes', 'preview_proof')
         }),
     )
+
+    def preview_proof(self, obj):
+        """Show file preview inside admin form."""
+        if not obj or not obj.proof_of_payment_file:
+            return "Sin archivo"
+
+        url = obj.proof_of_payment_file.url
+
+        # For images → show thumbnail
+        if obj.proof_of_payment_file.name.lower().endswith((".jpg", ".jpeg", ".png", ".gif")):
+            return format_html('<img src="{}" style="max-height:200px; border-radius:8px;" />', url)
+
+        # For PDFs → simple link or icon (basic version)
+        return format_html(
+            '<a href="{}" target="_blank">📄 Ver PDF</a>', url
+        )
+
+    preview_proof.short_description = "Vista previa"
 
     def amount_display(self, obj):
         return f"${obj.amount}"
@@ -141,11 +159,11 @@ class PaymentAdmin(admin.ModelAdmin):
     def has_proof(self, obj):
         if obj.proof_of_payment_file:
             return format_html(
-                '<a href="{}" target="_blank">View File</a>',
+                '<a href="{}" target="_blank">Abrir archivo</a>',
                 obj.proof_of_payment_file.url
             )
-        return "No file"
-    has_proof.short_description = 'Proof of Payment'
+        return "Sin archivo"
+    has_proof.short_description = 'Comprobante'
     
     def save_model(self, request, obj, form, change):
         if not change:  # Creating new payment
@@ -208,6 +226,7 @@ class PaymentAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return True
         return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
+    
 
 
 @admin.register(MonthlyBalance)

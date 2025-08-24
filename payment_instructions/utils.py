@@ -1,21 +1,4 @@
-from django.utils import timezone
-from django.db import models
-from decimal import Decimal
-from .models import PaymentRecipient, Payment, MonthlyBalance
-
-
-def get_suggested_recipient(amount):
-    """
-    Get suggested recipient for a payment amount.
-    Returns tuple of (recipient)
-    """
-    amount = int(str(amount))
-    recipient = PaymentRecipient.objects.find_best_recipient(amount)
-    
-    if not recipient:
-        return "No recipient available for this amount"
-    
-    return recipient
+from .models import PaymentRecipient
 
 
 def validate_payment_amount(amount, recipient_alias=None):

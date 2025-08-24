@@ -3,13 +3,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.utils.decorators import method_decorator
-from decimal import Decimal
 import json
-
-from .utils import get_suggested_recipient, validate_payment_amount
+from .utils import validate_payment_amount
 from .models import Payment, PaymentRecipient
 
 
@@ -83,9 +79,9 @@ def search_alias(request):
 def create_payment(request):
     """Create a new payment"""
     try:
-        data = json.loads(request.body)
-        amount = data.get('amount')
-        alias = data.get('alias')
+        amount = request.POST.get('amount')
+        alias = request.POST.get('alias')
+        file_obj = request.FILES.get('proof_of_payment_file') 
         
         if not amount or not alias:
             return JsonResponse({'error': 'Monto y alias son requeridos'}, status=400)
@@ -101,11 +97,26 @@ def create_payment(request):
         if not recipient.can_receive_amount(amount_decimal):
             return JsonResponse({'error': 'El destinatario no puede recibir este monto'}, status=400)
         
+        # Valida file 
+        if file_obj:
+            # 5MB maximum
+            max_bytes = 5 * 1024 * 1024
+            if file_obj.size > max_bytes:
+                return JsonResponse({'error': 'El archivo es demasiado grande. Máximo 5MB.'}, status=400)
+
+            allowed_types = {
+                'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'
+            }
+
+            if file_obj.content_type not in allowed_types:
+                return JsonResponse({'error': 'Tipo de archivo no válido. Solo imágenes o PDF.'}, status=400)
+        
         # Create payment
         payment = Payment.objects.create(
             amount=amount_decimal,
             payment_recipient=recipient,
-            operator_user=request.user
+            operator_user=request.user,
+            proof_of_payment_file=file_obj
         )
         
         return JsonResponse({
