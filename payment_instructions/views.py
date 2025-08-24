@@ -5,7 +5,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 import json
-from .utils import validate_payment_amount
+
+from payment_instructions.utils.file_compression import FileCompressor
+from .utils.utils import validate_payment_amount
 from .models import Payment, PaymentRecipient
 
 
@@ -61,7 +63,6 @@ def search_alias(request):
             return JsonResponse({
                 'success': True,
                 'alias': recipient.alias,
-                'bank_name': recipient.bank.name,
                 'name': recipient.name,
                 'amount': str(amount)
             })
@@ -97,7 +98,8 @@ def create_payment(request):
         if not recipient.can_receive_amount(amount_decimal):
             return JsonResponse({'error': 'El destinatario no puede recibir este monto'}, status=400)
         
-        # Valida file 
+        # Validate and compress file
+        compressed_file = None
         if file_obj:
             # 5MB maximum
             max_bytes = 5 * 1024 * 1024
@@ -110,13 +112,16 @@ def create_payment(request):
 
             if file_obj.content_type not in allowed_types:
                 return JsonResponse({'error': 'Tipo de archivo no válido. Solo imágenes o PDF.'}, status=400)
+            
+            # Compress the file
+            compressed_file = FileCompressor.compress_file(file_obj)
         
-        # Create payment
+        # Create payment with compressed file
         payment = Payment.objects.create(
             amount=amount_decimal,
             payment_recipient=recipient,
             operator_user=request.user,
-            proof_of_payment_file=file_obj
+            proof_of_payment_file=compressed_file  # Use compressed file
         )
         
         return JsonResponse({
