@@ -15,23 +15,6 @@ def modify_file_name(instance, filename):
     new_filename = f"{alias}_{day}.{ext}"
     return os.path.join(f'comprobantes/{year}/{month}', new_filename)
 
-
-class Bank(models.Model):
-    name = models.CharField(
-        verbose_name='Nombre del Banco',
-        max_length=100,
-        unique=True,
-        help_text='Nombre del banco o billetera virtual'
-    )
-    
-    class Meta:
-        ordering = ['name']
-        verbose_name = 'Banco'
-        verbose_name_plural = 'Bancos'
-    
-    def __str__(self):
-        return self.name
-
 class UserManager(BaseUserManager):
     def create_user(self, username, email=None, password=None, **extra_fields):
         if not username:
@@ -127,15 +110,6 @@ class PaymentRecipient(models.Model):
         max_length=22,
         unique=True,
         help_text='CBU / CVU del destinatario'
-    )
-    bank = models.ForeignKey(
-        Bank,
-        verbose_name='Banco',
-        on_delete=models.PROTECT,
-        related_name='payment_recipients',
-        help_text='Banco o billetera virtual del destinatario',
-        null=True,
-        blank=True
     )
     max_amount = models.PositiveIntegerField(
         verbose_name='Salario',
@@ -397,7 +371,7 @@ class Payment(models.Model):
     notes = models.TextField(
         verbose_name='Notas',
         blank=True,
-        help_text='Additional notes about this payment'
+        help_text='Notas adicionales sobre el pago'
     )
     created_at = models.DateTimeField(
         verbose_name='Creado',
@@ -456,68 +430,3 @@ class Payment(models.Model):
             'unique_recipients': payments.values('payment_recipient').distinct().count(),
             'unique_operators': payments.values('operator_user').distinct().count(),
         }
-
-
-class MonthlyBalance(models.Model):
-    payment_recipient = models.ForeignKey(
-        PaymentRecipient,
-        on_delete=models.CASCADE,
-        related_name='monthly_balances'
-    )
-    year = models.PositiveIntegerField()
-    month = models.PositiveIntegerField()  # 1-12
-    total_received = models.PositiveIntegerField()
-    payment_count = models.PositiveIntegerField(default=0)
-    last_updated = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ['payment_recipient', 'year', 'month']
-        ordering = ['-year', '-month']
-        verbose_name = 'Balance Mensual'
-        verbose_name_plural = 'Balances Mensuales'
-    
-    def __str__(self):
-        return f"{self.payment_recipient.alias} - {self.year}/{self.month:02d}: ${self.total_received}"
-    
-    @classmethod
-    def update_balance(cls, payment):
-        """Update monthly balance when a payment is made"""
-        balance, created = cls.objects.get_or_create(
-            payment_recipient=payment.payment_recipient,
-            year=payment.created_at.year,
-            month=payment.created_at.month,
-            defaults={
-                'total_received': 0,
-                'payment_count': 0
-            }
-        )
-        
-        # Recalculate from all payments for this month
-        monthly_payments = Payment.objects.filter(
-            payment_recipient=payment.payment_recipient,
-            created_at__year=payment.created_at.year,
-            created_at__month=payment.created_at.month
-        )
-        
-        balance.total_received = monthly_payments.aggregate(
-            total=models.Sum('amount')
-        )['total'] or 0
-        balance.payment_count = monthly_payments.count()
-        balance.save()
-        
-        return balance
-    
-    @classmethod
-    def reset_monthly_balances(cls, recipients=None):
-        """Reset monthly balances for recurring recipients (used for month rollover)"""
-        if recipients is None:
-            recipients = PaymentRecipient.objects.filter(is_recurring=True, is_active=True)
-        
-        reset_count = 0
-        for recipient in recipients:
-            # For recurring recipients, we don't actually delete balances
-            # The balance will automatically show current month data
-            # This method is more for marking the rollover event
-            reset_count += 1
-        
-        return reset_count

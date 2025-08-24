@@ -131,10 +131,6 @@
                                     <span id="recipientName" class="text-sm text-gray-900"></span>
                                 </div>
                                 <div class="flex flex-col sm:flex-row justify-between">
-                                    <span class="text-sm font-medium text-gray-500">Banco:</span>
-                                    <span id="bankName" class="text-sm text-gray-900">-</span>
-                                </div>
-                                <div class="flex flex-col sm:flex-row justify-between">
                                     <span class="text-sm font-medium text-gray-500">Alias:</span>
                                     <div class="flex items-center gap-2">
                                         <span id="recipientAlias" class="text-sm text-gray-900 font-mono"></span>
@@ -340,7 +336,6 @@
                 if (response.ok && data.success) {
                     document.getElementById('recipientName').textContent = data.name;
                     document.getElementById('recipientAlias').textContent = data.alias;
-                    document.getElementById('bankName').textContent = data.bank_name;
 
                     currentSearchData = data;
                     clearFile();

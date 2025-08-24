@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
-from .models import User, PaymentRecipient, Payment, MonthlyBalance
+from .models import User, PaymentRecipient, Payment
 
 
 @admin.register(User)
@@ -60,7 +60,7 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'alias', 'cbu', 'bank')
+            'fields': ('name', 'alias', 'cbu')
         }),
         ('Payment Configuration', {
             'fields': ('max_amount', 'priority_order', 'is_recurring', 'is_active')
@@ -180,8 +180,6 @@ class PaymentAdmin(admin.ModelAdmin):
             return
         
         super().save_model(request, obj, form, change)
-        # Update monthly balance
-        MonthlyBalance.update_balance(obj)
     
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -227,33 +225,6 @@ class PaymentAdmin(admin.ModelAdmin):
             return True
         return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
     
-
-
-@admin.register(MonthlyBalance)
-class MonthlyBalanceAdmin(admin.ModelAdmin):
-    list_display = (
-        'payment_recipient', 'year', 'month', 'total_received', 
-        'payment_count', 'last_updated'
-    )
-    list_filter = ('year', 'month', 'payment_recipient')
-    search_fields = ('payment_recipient__name', 'payment_recipient__alias')
-    ordering = ('-year', '-month', 'payment_recipient__name')
-    readonly_fields = ('total_received', 'payment_count', 'last_updated')
-    
-    def has_add_permission(self, request):
-        # Monthly balances are auto-generated
-        return False
-    
-    def has_change_permission(self, request, obj=None):
-        # Monthly balances are auto-updated
-        return False
-    
-    def has_delete_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
-
-
 # Customize admin site headers
 admin.site.site_header = "Docta Dent - Clinica dental"
 admin.site.site_title = "Sistema de Instrucciones de pago"

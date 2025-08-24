@@ -1,4 +1,4 @@
-from .models import PaymentRecipient
+from ..models import PaymentRecipient
 
 
 def validate_payment_amount(amount, recipient_alias=None):
