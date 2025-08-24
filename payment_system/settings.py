@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "fallback-secret")
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'tinchoolivari.pythonanywhere.com',
+    '159.69.150.168',
     '127.0.0.1'
 ]
 
