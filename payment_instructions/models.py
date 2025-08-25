@@ -151,11 +151,17 @@ class PaymentRecipient(models.Model):
         """Validate model data"""
         super().clean()
         
+        if self.max_amount is None:
+            raise ValidationError({'max_amount': 'Monto maximo debe ser mayor a cero.'})
+        
+        if self.priority_order is None:
+            raise ValidationError({'priority_order': 'La prioridad debe ser mayor a cero.'})
+        
         if self.max_amount <= 0:
-            raise ValidationError({'max_amount': 'Maximum amount must be greater than zero.'})
+            raise ValidationError({'max_amount': 'Monto maximo debe ser mayor a cero.'})
         
         if self.priority_order <= 0:
-            raise ValidationError({'priority_order': 'Priority order must be greater than zero.'})
+            raise ValidationError({'priority_order': 'La prioridad debe ser mayor a cero.'})
         
         # Check for duplicate priority (but allow during save process)
         if hasattr(self, '_skip_priority_validation'):
@@ -391,8 +397,8 @@ class Payment(models.Model):
         """Validate payment data"""
         super().clean()
         
-        if self.amount <= 0:
-            raise ValidationError({'amount': 'Payment amount must be greater than zero.'})
+        if self.amount is None or self.amount <= 0:
+            raise ValidationError({'amount': 'El monto debe ser mayor a cero.'})
         
         # Validate that recipient can receive this amount
         if self.payment_recipient:
@@ -403,11 +409,11 @@ class Payment(models.Model):
                 remaining = self.payment_recipient.get_remaining_amount(exclude_payment=exclude_payment)
                 if remaining <= 0:
                     raise ValidationError({
-                        'payment_recipient': f'Recipient {self.payment_recipient.alias} has already reached their monthly limit.'
+                        'payment_recipient': f'{self.payment_recipient.alias} ya alcanzo su limite mensual.'
                     })
                 else:
                     raise ValidationError({
-                        'amount': f'Amount exceeds remaining capacity. Maximum available: ${remaining}'
+                        'amount': f'El monto excede el saldo restante. Disponible: ${remaining}'
                     })
     
     @classmethod
