@@ -8,7 +8,7 @@ import json
 
 from payment_instructions.utils.file_compression import FileCompressor
 from .utils.utils import validate_payment_amount
-from .models import Payment, PaymentRecipient
+from .models import Payment, PaymentRecipient, Specialist
 
 
 def operator_login(request):
@@ -39,7 +39,10 @@ def operator_logout(request):
 @login_required
 def operator_dashboard(request):
     """Main operator dashboard"""
-    return render(request, 'payment_instructions/dashboard.html')
+    specialists = Specialist.objects.filter(is_active=True).order_by('name')
+    return render(request, 'payment_instructions/dashboard.html', {
+        'specialists': specialists,
+    })
 
 
 @login_required
@@ -82,10 +85,15 @@ def create_payment(request):
     try:
         amount = request.POST.get('amount')
         alias = request.POST.get('alias')
+        specialist_id = request.POST.get('specialist_id')
         file_obj = request.FILES.get('proof_of_payment_file') 
         
-        if not amount or not alias:
-            return JsonResponse({'error': 'Monto y alias son requeridos'}, status=400)
+        if not amount:
+            return JsonResponse({'error': 'Monto es requerido'}, status=400)
+        if not alias:
+            return JsonResponse({'error': 'Alias es requerido'}, status=400)
+        if not specialist_id:
+            return JsonResponse({'error': 'Especialista es requerido'}, status=400)
 
         if not file_obj:
             return JsonResponse({'error': 'El comprobante es requerido.'}, status=400)
@@ -95,6 +103,12 @@ def create_payment(request):
             recipient = PaymentRecipient.objects.get(alias=alias, is_active=True)
         except PaymentRecipient.DoesNotExist:
             return JsonResponse({'error': 'Destinatario no encontrado'}, status=400)
+        
+        # Get specialist
+        try:
+            specialist = Specialist.objects.get(pk=specialist_id, is_active=True)
+        except Specialist.DoesNotExist:
+            return JsonResponse({'error': 'Especialista no encontrado'}, status=400)
         
         # Validate amount
         amount_decimal = int(str(amount))
@@ -121,6 +135,7 @@ def create_payment(request):
         payment = Payment.objects.create(
             amount=amount_decimal,
             payment_recipient=recipient,
+            specialist=specialist,
             operator_user=request.user,
             proof_of_payment_file=compressed_file  # Use compressed file
         )

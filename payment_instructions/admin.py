@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
-from .models import User, PaymentRecipient, Payment
+from .models import User, PaymentRecipient, Payment, Specialist
 
 
 @admin.register(User)
@@ -114,6 +114,44 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
         return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
 
 
+@admin.register(Specialist)
+class SpecialistAdmin(admin.ModelAdmin):
+    list_display = (
+        'name', 'is_active', 'created_at'
+    )
+    list_filter = ('is_active', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    ordering = ('name',)
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Información básica', {
+            'fields': ('name',)
+        }),
+        ('Estado', {
+            'fields': ('is_active',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        if request.user.is_superuser:
+            return True
+        return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        return hasattr(request.user, 'role') and request.user.role == User.ADMINISTRATOR
+
+
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = (
@@ -127,7 +165,7 @@ class PaymentAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Payment Information', {
-            'fields': ('amount', 'payment_recipient','operator_user','created_at',)
+            'fields': ('amount', 'payment_recipient', 'specialist', 'operator_user', 'created_at',)
         }),
         ('Documentation', {
             'fields': ('proof_of_payment_file', 'notes', 'preview_proof')

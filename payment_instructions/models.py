@@ -109,6 +109,8 @@ class PaymentRecipient(models.Model):
         verbose_name='CBU / CVU',
         max_length=22,
         unique=True,
+        blank=True,
+        null=True, 
         help_text='CBU / CVU del destinatario'
     )
     max_amount = models.PositiveIntegerField(
@@ -176,10 +178,10 @@ class PaymentRecipient(models.Model):
         
         # Validate CBU format (should be 22 digits)
         if self.cbu and not self.cbu.isdigit():
-            raise ValidationError({'cbu': 'CBU must contain only digits.'})
+            raise ValidationError({'cbu': 'El CBU debe contener solo dígitos.'})
         
         if self.cbu and len(self.cbu) != 22:
-            raise ValidationError({'cbu': 'CBU must be exactly 22 digits long.'})
+            raise ValidationError({'cbu': 'El CBU debe tener 22 dígitos.'})
     
     def save(self, *args, **kwargs):
         """Override save to handle unique priority logic"""
@@ -348,6 +350,35 @@ class PaymentRecipient(models.Model):
         return summary
 
 
+class Specialist(models.Model):
+    name = models.CharField(
+        verbose_name='Nombre',
+        max_length=200,
+        help_text='Nombre del especialista'
+    )
+    is_active = models.BooleanField(
+        verbose_name='Activo',
+        default=True,
+        help_text='Si es Verdadero, disponible para asignación a pagos'
+    )
+    created_at = models.DateTimeField(
+        verbose_name='Creado',
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        verbose_name='Actualizado',
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Especialista'
+        verbose_name_plural = 'Especialistas'
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class Payment(models.Model):
     amount = models.PositiveIntegerField(
         verbose_name='Monto',
@@ -359,6 +390,15 @@ class Payment(models.Model):
         on_delete=models.PROTECT,
         related_name='payments',
         help_text='Destinatario del pago'
+    )
+    specialist = models.ForeignKey(
+        'Specialist',
+        verbose_name='Especialista',
+        on_delete=models.PROTECT,
+        related_name='payments',
+        help_text='Especialista asociado al pago',
+        null=False,
+        blank=False
     )
     proof_of_payment_file = models.FileField(
         verbose_name='Comprobante',
@@ -398,6 +438,9 @@ class Payment(models.Model):
         if self.amount is None or self.amount <= 0:
             raise ValidationError({'amount': 'El monto debe ser mayor a cero.'})
         
+        if not self.specialist:
+            raise ValidationError({'specialist': 'El especialista es requerido.'})
+
         if not self.proof_of_payment_file:
             raise ValidationError({'proof_of_payment_file': 'El comprobante es requerido.'})
         
