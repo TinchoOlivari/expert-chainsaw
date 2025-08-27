@@ -363,8 +363,6 @@ class Payment(models.Model):
     proof_of_payment_file = models.FileField(
         verbose_name='Comprobante',
         upload_to=modify_file_name,
-        blank=True,
-        null=True,
         help_text='Subir comprobante de pago (imagen o PDF)'
     )
     operator_user = models.ForeignKey(
@@ -399,6 +397,9 @@ class Payment(models.Model):
         
         if self.amount is None or self.amount <= 0:
             raise ValidationError({'amount': 'El monto debe ser mayor a cero.'})
+        
+        if not self.proof_of_payment_file:
+            raise ValidationError({'proof_of_payment_file': 'El comprobante es requerido.'})
         
         # Validate that recipient can receive this amount
         if self.payment_recipient:

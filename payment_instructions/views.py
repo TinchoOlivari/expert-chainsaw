@@ -86,6 +86,9 @@ def create_payment(request):
         
         if not amount or not alias:
             return JsonResponse({'error': 'Monto y alias son requeridos'}, status=400)
+
+        if not file_obj:
+            return JsonResponse({'error': 'El comprobante es requerido.'}, status=400)
         
         # Get recipient
         try:
@@ -99,22 +102,20 @@ def create_payment(request):
             return JsonResponse({'error': 'El destinatario no puede recibir este monto'}, status=400)
         
         # Validate and compress file
-        compressed_file = None
-        if file_obj:
-            # 5MB maximum
-            max_bytes = 5 * 1024 * 1024
-            if file_obj.size > max_bytes:
-                return JsonResponse({'error': 'El archivo es demasiado grande. Máximo 5MB.'}, status=400)
+        # 5MB maximum
+        max_bytes = 5 * 1024 * 1024
+        if file_obj.size > max_bytes:
+            return JsonResponse({'error': 'El archivo es demasiado grande. Máximo 5MB.'}, status=400)
 
-            allowed_types = {
-                'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'
-            }
+        allowed_types = {
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'
+        }
 
-            if file_obj.content_type not in allowed_types:
-                return JsonResponse({'error': 'Tipo de archivo no válido. Solo imágenes o PDF.'}, status=400)
-            
-            # Compress the file
-            compressed_file = FileCompressor.compress_file(file_obj)
+        if file_obj.content_type not in allowed_types:
+            return JsonResponse({'error': 'Tipo de archivo no válido. Solo imágenes o PDF.'}, status=400)
+        
+        # Compress the file
+        compressed_file = FileCompressor.compress_file(file_obj)
         
         # Create payment with compressed file
         payment = Payment.objects.create(

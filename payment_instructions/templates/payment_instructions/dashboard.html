@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docta Dent - Sistema de Pagos</title>
+    <title>Docta Dent - Sistema de pagos por transferencia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -87,9 +87,9 @@
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap  py-4">
+            <div class="flex flex-wrap justify-between py-4">
                 <h1 class="text-2xl font-semibold text-gray-500 pr-1">
-                    Sistema de pagos -
+                    Sistema de pagos por transferencia
                 </h1>
                 <h1 class="text-2xl font-semibold text-[#8CBE4F]"> Docta Dent</h1>
             </div>
@@ -102,7 +102,7 @@
             <div data-animate="fade-in" class="bg-white overflow-hidden shadow-lg rounded-lg p-4 opacity-0">
                 <div class="px-4 py-5 sm:p-6">
                     <h3 class="text-xl leading-6 font-medium text-gray-900 mb-6">
-                        Ingresa el monto del nuevo pago
+                        Ingresa el monto
                     </h3>
 
                     <!-- Search Form -->
@@ -124,7 +124,7 @@
                     <div id="results" class="hidden">
                         <div class="h-px bg-gray-200 my-4"></div>
                         <div class="mt-6 bg-gray-50 p-4 rounded-lg">
-                            <h4 class="text-md font-medium text-gray-900 mb-4">Datos del destinatario:</h4>
+                            <h4 class="text-md font-medium text-gray-900 mb-4">1. Datos del destinatario:</h4>
                             <div class="space-y-2">
                                 <div class="flex flex-col sm:flex-row justify-between">
                                     <span class="text-sm font-medium text-gray-500">Nombre:</span>
@@ -157,19 +157,19 @@
 
                             <!-- File Upload Section -->
                             <div class="mt-4 pt-4 border-t border-gray-200">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-500">Comprobante:</span>
+                                <div class="flex items-center mb-2">
+                                    <h4 class="text-md font-medium text-gray-900 mb-4">2. Comprobante de pago:</h4>
                                 </div>
 
                                 <div id="fileDropZone"
-                                    class="flex flex-col items-center justify-center w-full min-h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition group">
-                                    <input id="fileInput" name="proof_of_payment_file" type="file"
+                                    class="flex flex-col items-center justify-center w-full min-h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 transition group">
+                                    <input id="fileInput" name="proof_of_payment_file" type="file" required
                                         accept=".jpg,.jpeg,.png,.gif,.pdf" class="hidden">
 
                                     <!-- Preview -->
                                     <div id="filePreview" class="m-3"></div>
                                     <div id="fileContent"
-                                        class="flex flex-col items-center space-y-2 text-gray-500 group-hover:text-gray-600 transition-colors">
+                                        class="flex flex-col items-center space-y-2 text-gray-500 group-hover:text-gray-700 transition-colors">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
@@ -189,7 +189,7 @@
                         </div>
 
                         <button type="button" id="createPaymentBtn"
-                            class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400">
                             Crear pago
                         </button>
                     </div>
@@ -197,14 +197,14 @@
 
                 <!-- Error Messages -->
                 <div id="errorMessage"
-                    class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                    class="hidden bg-red-100 border border-red-400 text-red-700 mx-6 mb-2 px-4 py-3 rounded relative"
                     role="alert">
                     <span id="errorText"></span>
                 </div>
 
                 <!-- Success Messages -->
                 <div id="successMessage"
-                    class="hidden mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
+                    class="hidden mt-4 bg-green-100 border border-green-400 text-green-700 mx-6 mb-2 px-4 py-3 rounded relative"
                     role="alert">
                     <span id="successText"></span>
                 </div>
@@ -258,6 +258,7 @@
         let currentSearchData = null;
         let debounceTimer = null;
         let currentRequest = null;
+
 
         function revealWithAnimation(element) {
             element.classList.remove('animate-fade-out');
@@ -340,6 +341,7 @@
                     currentSearchData = data;
                     clearFile();
                     revealWithAnimation(results);
+                    
 
                 } else {
                     hideResults();
@@ -354,6 +356,7 @@
                 }
             } finally {
                 currentRequest = null;
+                
             }
         }
 
@@ -384,6 +387,11 @@
         createPaymentBtn.addEventListener('click', async function () {
             if (!currentSearchData) {
                 showError('No hay datos de pago disponibles');
+                return;
+            }
+
+            if (!selectedFile) {
+                showError('El comprobante es requerido.');
                 return;
             }
 
@@ -537,6 +545,7 @@
 
             selectedFile = file;
             displaySelectedFile(file);
+            
         }
 
         function displaySelectedFile(file) {
@@ -615,6 +624,7 @@
             `;
 
             document.getElementById('filePreview').innerHTML = "";
+            
         }
 
     </script>
