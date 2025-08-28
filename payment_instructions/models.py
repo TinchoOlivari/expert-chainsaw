@@ -396,6 +396,16 @@ class Specialist(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+    def get_current_month_amount(self):
+        """Return total amount of payments linked to this specialist in the current month."""
+        start_of_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return (
+            self.payments.filter(created_at__gte=start_of_month)
+            .aggregate(total=models.Sum('amount'))
+            .get('total')
+            or 0
+        )
+
 
 class Payment(models.Model):
     amount = models.PositiveIntegerField(

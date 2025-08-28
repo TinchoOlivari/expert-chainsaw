@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django.utils import timezone
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
@@ -117,12 +119,12 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
 @admin.register(Specialist)
 class SpecialistAdmin(admin.ModelAdmin):
     list_display = (
-        'name', 'is_active', 'created_at'
+        'name', 'current_month_amount_display', 'is_active',
     )
     list_filter = ('is_active', 'created_at', 'updated_at')
     search_fields = ('name',)
     ordering = ('name',)
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'current_month_amount_display')
     fieldsets = (
         ('Información básica', {
             'fields': ('name',)
@@ -131,10 +133,21 @@ class SpecialistAdmin(admin.ModelAdmin):
             'fields': ('is_active',)
         }),
         ('Metadatos', {
-            'fields': ('created_at', 'updated_at'),
+            'fields': ('created_at', 'updated_at', 'current_month_amount_display'),
             'classes': ('collapse',)
         }),
     )
+
+    def current_month_amount_display(self, obj):
+        return f"${getattr(obj, 'current_month_amount', None) or obj.get_current_month_amount()}"
+    current_month_amount_display.short_description = 'Dinero del mes actual'
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        start_of_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return qs.annotate(
+            current_month_amount=models.Sum('payments__amount', filter=models.Q(payments__created_at__gte=start_of_month))
+        )
 
     def has_add_permission(self, request):
         if request.user.is_superuser:
