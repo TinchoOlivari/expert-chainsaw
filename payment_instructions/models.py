@@ -117,6 +117,11 @@ class PaymentRecipient(models.Model):
         verbose_name='Salario',
         help_text='Monto que el destinatario puede recibir'
     )
+    min_threshold = models.PositiveIntegerField(
+        verbose_name='Mínimo por pago',
+        default=0,
+        help_text='Monto mínimo requerido por pago para ser asignado (0 = sin mínimo)'
+    )
     is_recurring = models.BooleanField(
         verbose_name='Recurrente',
         default=True,
@@ -156,11 +161,20 @@ class PaymentRecipient(models.Model):
         if self.max_amount is None:
             raise ValidationError({'max_amount': 'Monto maximo debe ser mayor a cero.'})
         
+        if self.min_threshold is None:
+            raise ValidationError({'min_threshold': 'El mínimo por pago no puede ser nulo.'})
+        
         if self.priority_order is None:
             raise ValidationError({'priority_order': 'La prioridad debe ser mayor a cero.'})
         
         if self.max_amount <= 0:
             raise ValidationError({'max_amount': 'Monto maximo debe ser mayor a cero.'})
+        
+        if self.min_threshold < 0:
+            raise ValidationError({'min_threshold': 'El mínimo por pago no puede ser negativo.'})
+        
+        if self.min_threshold > self.max_amount:
+            raise ValidationError({'min_threshold': 'El mínimo por pago no puede superar el monto máximo.'})
         
         if self.priority_order <= 0:
             raise ValidationError({'priority_order': 'La prioridad debe ser mayor a cero.'})
@@ -270,6 +284,10 @@ class PaymentRecipient(models.Model):
         if not self.is_active:
             return False
         
+        # Respect minimum threshold amount per payment
+        if amount < (self.min_threshold or 0):
+            return False
+        
         # For one-time recipients, check if they have already received any payment
         if not self.is_recurring:
             queryset = self.payments
@@ -279,10 +297,10 @@ class PaymentRecipient(models.Model):
             total_received = queryset.aggregate(
                 total=models.Sum('amount')
             )['total'] or 0
-            return total_received == 0 and amount <= self.max_amount
+            return total_received == 0 and amount <= self.max_amount and amount >= (self.min_threshold or 0)
         
         # For recurring recipients, check monthly limit
-        return self.get_remaining_amount(exclude_payment=exclude_payment) >= amount
+        return self.get_remaining_amount(exclude_payment=exclude_payment) >= amount and amount >= (self.min_threshold or 0)
     
     def get_capacity_percentage(self):
         """Get the percentage of capacity used this month"""

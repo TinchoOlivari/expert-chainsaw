@@ -63,7 +63,7 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
             'fields': ('name', 'alias', 'cbu')
         }),
         ('Payment Configuration', {
-            'fields': ('max_amount', 'priority_order', 'is_recurring', 'is_active')
+            'fields': ('max_amount', 'min_threshold', 'priority_order', 'is_recurring', 'is_active')
         }),
         ('Current Status', {
             'fields': ('current_month_received', 'remaining_amount'),
