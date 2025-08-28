@@ -77,7 +77,7 @@ class PaymentRecipientAdmin(admin.ModelAdmin):
 
     def max_amount_display(self, obj):
         return f"${obj.max_amount}"
-    max_amount_display.short_description = 'Salario'
+    max_amount_display.short_description = 'Monto máximo'
 
 
     def current_month_received(self, obj):

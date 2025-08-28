@@ -114,8 +114,8 @@ class PaymentRecipient(models.Model):
         help_text='CBU / CVU del destinatario'
     )
     max_amount = models.PositiveIntegerField(
-        verbose_name='Salario',
-        help_text='Monto que el destinatario puede recibir'
+        verbose_name='Monto máximo',
+        help_text='Monto máximo que el destinatario puede recibir'
     )
     min_threshold = models.PositiveIntegerField(
         verbose_name='Mínimo por pago',
